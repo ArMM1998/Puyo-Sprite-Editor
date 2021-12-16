@@ -1,4 +1,6 @@
-To use, download the sprite_viewer.py
+To use, download the sprite_viewer.py and run it via command prompt.
+
+It only works on windows so far because of the pywin32 library.
 
 # Requirements:
 	Python 3.0 or above
@@ -8,11 +10,11 @@ To use, download the sprite_viewer.py
 	
 
 # Usage: 
-	sprite_viewer.py [directory] [animation file] [optional big endian]
+	sprite_viewer.py [directory] [animation file] [big endian flag]
 
 	- directory: Directory containing all of the textures converted to png.
 	- animation file: Any animation file from 15th anniversary up to 20th anniversary (excluding 20th 3ds).
-	- optional big endian: has to be "-be" without quotations. Only use this if the animation file is big endian.
+	- big endian flag: OPTIONAL. has to be "-be" without quotations. Only use this if the animation file is big endian, leave it empty if it's little endian.
 
 # Shortcuts:
 	- Right Click:
