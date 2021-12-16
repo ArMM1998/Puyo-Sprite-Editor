@@ -104,6 +104,7 @@ def Export_Image(width, height, sq_x, sq_y, sq_w, sq_h):
     image = Image.new('RGBA', (width, height), (0,0,0,0))
     draw = ImageDraw.Draw(image)
     draw.rectangle([sq_x,sq_y,sq_w + sq_x,sq_h + sq_y], fill=(0,0,255,128))
+    draw.rectangle([sq_x+1,sq_y+1,sq_w + sq_x-1,sq_h + sq_y-1], fill=(255,0,0,128))
     #image.paste(og_image, (0,0), og_image)
     output = BytesIO()
     image.convert("RGBA").save(output, "BMP")
@@ -128,11 +129,12 @@ def ExportAllSquares():
         multh = sprite[8]
         
         if sprite[0] == current_texture:
+            #TOPRIGHT X
             Pixellength = (multipliersX[multx][1] - multipliersX[multx][0])  
             ONE_THIRD = int(Pixellength/3)
             TWO_THIRDS = ONE_THIRD + ONE_THIRD
             
-            if x <= 127:
+            if x < 127:
                 sprite_to_export[0] = (int(((x) * ONE_THIRD - 1)/127)+ multipliersX[multx][0])
             else:
                 sprite_to_export[0] = (int(((x - 127)*TWO_THIRDS - 1)/127) + multipliersX[multx][0] + ONE_THIRD)
@@ -143,11 +145,11 @@ def ExportAllSquares():
             Pixellength = (multipliersY[multy][1] - multipliersY[multy][0])  
             ONE_THIRD = int(Pixellength/3)
             TWO_THIRDS = ONE_THIRD + ONE_THIRD
-            if y <= 127:
+            if y < 127:
             
                 sprite_to_export[1] = int(((y) * ONE_THIRD - 1)/127)+ multipliersY[multy][0]
             else:
-                sprite_to_export[1] = (int(((y - 127)*TWO_THIRDS - 1)/127) + multipliersY[multy][0] + ONE_THIRD)
+                sprite_to_export[1] = (int(((y - 127)*TWO_THIRDS - 1)/127) + multipliersY[multy][0] + ONE_THIRD-1)
                 
             #Width
             
@@ -155,10 +157,10 @@ def ExportAllSquares():
             ONE_THIRD = int(Pixellength/3)
             TWO_THIRDS = ONE_THIRD + ONE_THIRD
             
-            if w <= 127:
+            if w < 127:
                 sprite_to_export[2] = (int(((w) * ONE_THIRD - 1)/127) + multipliersX[multw][0]) - sprite_to_export[0]
             else:
-                sprite_to_export[2] = (int(((w - 127)*TWO_THIRDS - 1)/127) + multipliersX[multw][0] + ONE_THIRD) - sprite_to_export[0]
+                sprite_to_export[2] = (int(((w - 127)*TWO_THIRDS - 1)/127) + multipliersX[multw][0] + ONE_THIRD-1) - sprite_to_export[0]
             
             
             
@@ -166,12 +168,13 @@ def ExportAllSquares():
             Pixellength = (multipliersY[multh][1] - multipliersY[multh][0])  
             ONE_THIRD = int(Pixellength/3)
             TWO_THIRDS = ONE_THIRD + ONE_THIRD
-            if h <= 127:
+            if h < 127:
                 sprite_to_export[3] = (int(((h) * ONE_THIRD - 1)/127)) + multipliersY[multh][0] - sprite_to_export[1]
             else:
-                sprite_to_export[3] = ((int(((h - 127)*TWO_THIRDS - 1)/127) ) + multipliersY[multh][0] + ONE_THIRD - sprite_to_export[1])
+                sprite_to_export[3] = ((int(((h - 127)*TWO_THIRDS - 1)/127) ) + multipliersY[multh][0] + ONE_THIRD-1 - sprite_to_export[1])
                 
             draw.rectangle([sprite_to_export[0],sprite_to_export[1],sprite_to_export[2] + sprite_to_export[0],sprite_to_export[3] + sprite_to_export[1]], fill=(0,0,255,128))
+            draw.rectangle([sprite_to_export[0]+1,sprite_to_export[1]+1,sprite_to_export[2] + sprite_to_export[0]-1,sprite_to_export[3]-1 + sprite_to_export[1]], fill=(255,0,0,128))
         output = BytesIO()
         image.convert("RGBA").save(output, "BMP")
         data = output.getvalue()[14:]
@@ -266,14 +269,14 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
                 191 : [-int(Img_size[0] * 8)   ,-int(Img_size[0] * 32)],
                 192 : [-int(Img_size[0] * 32)  ,-int(Img_size[0] * 128)],
                 
-                59 : [int(Img_size[0] / 512) ,int(Img_size[0] / 128)],
-                60 : [int(Img_size[0] / 128) ,int(Img_size[0] / 32)],
-                61 : [int(Img_size[0] / 32)  ,int(Img_size[0] / 8)],
-                62 : [int(Img_size[0] / 8)   ,int(Img_size[0] / 2)],
-                63 : [int(Img_size[0] / 2)   ,int(Img_size[0] * 2)],
-                64 : [int(Img_size[0] * 2)   ,int(Img_size[0] * 8)],
-                65 : [int(Img_size[0] * 8)   ,int(Img_size[0] * 32)],
-                66 : [int(Img_size[0] * 32)  ,int(Img_size[0] * 128)]}
+                59 : [int(Img_size[0] / 512) ,int(Img_size[0] / 128 )],
+                60 : [int(Img_size[0] / 128) ,int(Img_size[0] / 32  )],
+                61 : [int(Img_size[0] / 32)  ,int(Img_size[0] / 8   )],
+                62 : [int(Img_size[0] / 8)  +1 ,int(Img_size[0] / 2   -1)],
+                63 : [int(Img_size[0] / 2)   ,int(Img_size[0] * 2   -1)],
+                64 : [int(Img_size[0] * 2)   ,int(Img_size[0] * 8   -1)],
+                65 : [int(Img_size[0] * 8)   ,int(Img_size[0] * 32  -1)],
+                66 : [int(Img_size[0] * 32)  ,int(Img_size[0] * 128 -1)]}
                 
     multipliersY = { 0 : [0,0],
                 185 : [-int(Img_size[1] / 512) ,-int(Img_size[1] / 128)],
@@ -285,14 +288,14 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
                 191 : [-int(Img_size[1] * 8)   ,-int(Img_size[1] * 32)],
                 192 : [-int(Img_size[1] * 32)  ,-int(Img_size[1] * 128)],
                 
-                59 : [int(Img_size[1] / 512) ,int(Img_size[1] / 128)],
-                60 : [int(Img_size[1] / 128) ,int(Img_size[1] / 32)],
-                61 : [int(Img_size[1] / 32)  ,int(Img_size[1] / 8)],
-                62 : [int(Img_size[1] / 8)   ,int(Img_size[1] / 2)],
-                63 : [int(Img_size[1] / 2)   ,int(Img_size[1] * 2)],
-                64 : [int(Img_size[1] * 2)   ,int(Img_size[1] * 8)],
-                65 : [int(Img_size[1] * 8)   ,int(Img_size[1] * 32)],
-                66 : [int(Img_size[1] * 32)  ,int(Img_size[1] * 128)]}
+                59 : [int(Img_size[1] / 512)  ,int(Img_size[1] / 128)],
+                60 : [int(Img_size[1] / 128)  ,int(Img_size[1] / 32) ],
+                61 : [int(Img_size[1] / 32)   ,int(Img_size[1] / 8)  ],
+                62 : [int(Img_size[1] / 8)   +1 ,int(Img_size[1] / 2)  -1],
+                63 : [int(Img_size[1] / 2)    ,int(Img_size[1] * 2)  -1],
+                64 : [int(Img_size[1] * 2)    ,int(Img_size[1] * 8)  -1],
+                65 : [int(Img_size[1] * 8)    ,int(Img_size[1] * 32) -1],
+                66 : [int(Img_size[1] * 32)   ,int(Img_size[1] * 128)-1]}
     # i'm so bad lol
     txt_texture.text = str(texture)
     if txt_texture.active:
@@ -358,6 +361,10 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
     txt_Ypos.text = str(rect_coords[1])
     txt_Width.text = str(rect_coords[2])
     txt_Height.text = str(rect_coords[3])
+    txt_Xpos.maxm = Img_size[0]
+    txt_Ypos.maxm = Img_size[1]
+    txt_Width.maxm = Img_size[0]
+    txt_Height.maxm = Img_size[1]
     
     
     txt_Xpos.maxm = Img_size[0]
@@ -532,11 +539,64 @@ class TextBox:
             rect_coords[3] = int(txt_Height.text)
             rect_coords[3] = int(txt_Height.text)
             if self.title == "Texture":
-                global img 
-                img = pygame.image.load(directory[0] + "\\" + texture_list[int(txt_texture.text)])
-                
+                if self.active:
+                    global img 
+                    img = pygame.image.load(directory[0] + "\\" + texture_list[int(txt_texture.text)])
+                    global current_texture
+                    current_texture = int(txt_texture.text)
+                    Img_size = img.get_size()
+                    global multipliersX
+                    global multipliersY
+                    multipliersX = { 0 : [0,0],
+                                185 : [-int(Img_size[0] / 512) ,-int(Img_size[0] / 128)],
+                                186 : [-int(Img_size[0] / 128) ,-int(Img_size[0] / 32)],
+                                187 : [-int(Img_size[0] / 32)  ,-int(Img_size[0] / 8)],
+                                188 : [-int(Img_size[0] / 8)   ,-int(Img_size[0] / 2)],
+                                189 : [-int(Img_size[0] / 2)   ,-int(Img_size[0] * 2)],
+                                190 : [-int(Img_size[0] * 2)   ,-int(Img_size[0] * 8)],
+                                191 : [-int(Img_size[0] * 8)   ,-int(Img_size[0] * 32)],
+                                192 : [-int(Img_size[0] * 32)  ,-int(Img_size[0] * 128)],
+                                
+                                59 : [int(Img_size[0] / 512) ,int(Img_size[0] / 128 )],
+                                60 : [int(Img_size[0] / 128) ,int(Img_size[0] / 32  )],
+                                61 : [int(Img_size[0] / 32)  ,int(Img_size[0] / 8   )],
+                                62 : [int(Img_size[0] / 8)  +1 ,int(Img_size[0] / 2   -1)],
+                                63 : [int(Img_size[0] / 2)   ,int(Img_size[0] * 2   -1)],
+                                64 : [int(Img_size[0] * 2)   ,int(Img_size[0] * 8   -1)],
+                                65 : [int(Img_size[0] * 8)   ,int(Img_size[0] * 32  -1)],
+                                66 : [int(Img_size[0] * 32)  ,int(Img_size[0] * 128 -1)]}
+                                
+                    multipliersY = { 0 : [0,0],
+                                185 : [-int(Img_size[1] / 512) ,-int(Img_size[1] / 128)],
+                                186 : [-int(Img_size[1] / 128) ,-int(Img_size[1] / 32)],
+                                187 : [-int(Img_size[1] / 32)  ,-int(Img_size[1] / 8)],
+                                188 : [-int(Img_size[1] / 8)   ,-int(Img_size[1] / 2)],
+                                189 : [-int(Img_size[1] / 2)   ,-int(Img_size[1] * 2)],
+                                190 : [-int(Img_size[1] * 2)   ,-int(Img_size[1] * 8)],
+                                191 : [-int(Img_size[1] * 8)   ,-int(Img_size[1] * 32)],
+                                192 : [-int(Img_size[1] * 32)  ,-int(Img_size[1] * 128)],
+                                
+                                59 : [int(Img_size[1] / 512)  ,int(Img_size[1] / 128)],
+                                60 : [int(Img_size[1] / 128)  ,int(Img_size[1] / 32) ],
+                                61 : [int(Img_size[1] / 32)   ,int(Img_size[1] / 8)  ],
+                                62 : [int(Img_size[1] / 8)   +1 ,int(Img_size[1] / 2)  -1],
+                                63 : [int(Img_size[1] / 2)    ,int(Img_size[1] * 2)  -1],
+                                64 : [int(Img_size[1] * 2)    ,int(Img_size[1] * 8)  -1],
+                                65 : [int(Img_size[1] * 8)    ,int(Img_size[1] * 32) -1],
+                                66 : [int(Img_size[1] * 32)   ,int(Img_size[1] * 128)-1]}
+                    
+                    
                 rect_coords[0] = int(0)
                 rect_coords[1] = int(0)
+                
+                txt_Xpos.maxm =   img.get_size()[0]
+                txt_Ypos.maxm =   img.get_size()[1]
+                txt_Width.maxm =  img.get_size()[0]
+                txt_Height.maxm = img.get_size()[1]
+                
+                
+                
+                
                 
         except:
             pass
