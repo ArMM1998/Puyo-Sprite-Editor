@@ -1,3 +1,5 @@
+To use, download the sprite_viewer.py
+
 # Requirements:
 	Python 3.0 or above
 	pillow
