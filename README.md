@@ -43,10 +43,10 @@ It only works on windows so far because of the pywin32 library.
 		Save the currently selected sprite into the animation file.
 		
 	- CTRL + C: 
-		Copy to the clipboard a blue square of the currenty selected sprite.
+		Copy to the clipboard a red square of the currenty selected sprite.
 		
 	- CTRL + ALT + C: 
-		Copy to the clipboard a blue square for every sprite on the currenty selected texture.
+		Copy to the clipboard a red square for every sprite on the currenty selected texture.
 	
 	- Delete:
 		Set the current sprite's position, width and height to 0. (useful when you want to clear out unnecessary sprites that are not used.)
