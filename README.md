@@ -17,6 +17,9 @@ It only works on windows so far because of the pywin32 library.
 	- big endian flag: OPTIONAL. has to be "-be" without quotations. Only use this if the animation file is big endian, leave it empty if it's little endian.
 
 # Shortcuts:
+	- Left Click:
+		While holding LShift:
+			Resize sprite
 	- Right Click:
 		drag the sprite around to adjust it's position.
 	
@@ -30,8 +33,6 @@ It only works on windows so far because of the pywin32 library.
 			Move the sprite around to adjust it's position.
 		- While holding CTRL:
 			Select next / previous sprite
-		- While holding Shift:
-			Move the texture view.
 	- R: 
 		Reset sprite position, width, height, and texture.
 		
