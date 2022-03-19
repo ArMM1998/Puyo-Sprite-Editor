@@ -4,6 +4,8 @@ import pygame
 from PIL import Image, ImageDraw
 from io import BytesIO
 import win32clipboard
+import struct 
+
 
 
 current_selected = -1
@@ -37,6 +39,7 @@ rect_coords = [-10,-10,0,0]
 directory = sys.argv[1:]
 texture_list = os.listdir(directory[0])
 
+counter = 120
 
 
 for fichier in texture_list[:]: # filelist[:] makes a copy of filelist.
@@ -60,12 +63,21 @@ if big_endian_flag == "-be":
     offset = (anim_file_data[71])* 8
     amount_of_sprites = (anim_file_data[79])
     amount_of_sprites += (anim_file_data[78] * 256)
+elif big_endian_flag == "-touch":
+    counter = 148
+    offset = (anim_file_data[68])* 8
+    amount_of_sprites = (anim_file_data[72])
+    amount_of_sprites += (anim_file_data[63] * 256)
 else:
     offset = (anim_file_data[68])* 8
     amount_of_sprites = (anim_file_data[76])
     amount_of_sprites += (anim_file_data[77] * 256)
 
-counter = 120 + offset
+counter = counter + offset
+
+
+
+print(counter)
 
 print("total sprites: ",amount_of_sprites)
 
@@ -73,26 +85,27 @@ for i in range(0,amount_of_sprites):
     
     if big_endian_flag == "-be":
         sprite_list.append([anim_file_data[counter + 3],
-                            anim_file_data[counter + 5], anim_file_data[counter + 4],
+                            (anim_file_data[counter + 7], anim_file_data[counter + 6], anim_file_data[counter + 5], anim_file_data[counter + 4]),
                             
-                            anim_file_data[counter + 9], anim_file_data[counter + 8],
+                            (anim_file_data[counter + 11], anim_file_data[counter + 10], anim_file_data[counter + 9], anim_file_data[counter + 8]),
                             
                             
-                            anim_file_data[counter + 13], anim_file_data[counter + 12],
+                            (anim_file_data[counter + 15], anim_file_data[counter + 14], anim_file_data[counter + 13], anim_file_data[counter + 12]),
                             
-                            anim_file_data[counter + 17], anim_file_data[counter + 16], counter])
+                            (anim_file_data[counter + 19], anim_file_data[counter + 18], anim_file_data[counter + 17], anim_file_data[counter + 16]), counter
+                            ])
                             
         
     else: 
         sprite_list.append([anim_file_data[counter],
-                            anim_file_data[counter + 6], anim_file_data[counter + 7],
+                            (anim_file_data[counter + 4], anim_file_data[counter + 5], anim_file_data[counter + 6], anim_file_data[counter + 7]),
                             
-                            anim_file_data[counter + 10], anim_file_data[counter + 11],
+                            (anim_file_data[counter + 8], anim_file_data[counter + 9], anim_file_data[counter + 10], anim_file_data[counter + 11]),
                             
                             
-                            anim_file_data[counter + 14], anim_file_data[counter + 15],
+                            (anim_file_data[counter + 12], anim_file_data[counter + 13], anim_file_data[counter + 14], anim_file_data[counter + 15]),
                             
-                            anim_file_data[counter + 18], anim_file_data[counter + 19], counter
+                            (anim_file_data[counter + 16], anim_file_data[counter + 17], anim_file_data[counter + 18], anim_file_data[counter + 19]), counter
                             ])
     counter += 20
 
@@ -117,64 +130,22 @@ img = pygame.image.load(directory[0] + "/" + texture_list[0])
 def ExportAllSquares():
     image = Image.new('RGBA', img.get_size(), (0,0,0,0))
     draw = ImageDraw.Draw(image)
+    Img_size = img.get_size()
     sprite_to_export = [0,0,0,0]
     for sprite in sprite_list:
         x = sprite[1]
-        multx = sprite[2]
-        y = sprite[3]
-        multy = sprite[4]
-        w = sprite[5]
-        multw = sprite[6]
-        h = sprite[7]
-        multh = sprite[8]
+        y = sprite[2]
+        w = sprite[3]
+        h = sprite[4]
         
         if sprite[0] == current_texture:
-            #TOPRIGHT X
-            Pixellength = (multipliersX[multx][1] - multipliersX[multx][0])  
-            ONE_THIRD = int(Pixellength/3)
-            TWO_THIRDS = ONE_THIRD + ONE_THIRD
             
-            if x < 127:
-                sprite_to_export[0] = (int(((x) * ONE_THIRD - 1)/127)+ multipliersX[multx][0])
-            else:
-                sprite_to_export[0] = (int(((x - 127)*TWO_THIRDS - 1)/127) + multipliersX[multx][0] + ONE_THIRD)
+            sprite_to_export = calcu(x, y, w, h)
+            sprite_to_export = (Img_size[0] * sprite_to_export[0], Img_size[1] * sprite_to_export[1], Img_size[0] * sprite_to_export[2], Img_size[1] * sprite_to_export[3])
+
             
-            
-            
-            #TOPRIGHT Y
-            Pixellength = (multipliersY[multy][1] - multipliersY[multy][0])  
-            ONE_THIRD = int(Pixellength/3)
-            TWO_THIRDS = ONE_THIRD + ONE_THIRD
-            if y < 127:
-            
-                sprite_to_export[1] = int(((y) * ONE_THIRD - 1)/127)+ multipliersY[multy][0]
-            else:
-                sprite_to_export[1] = (int(((y - 127)*TWO_THIRDS - 1)/127) + multipliersY[multy][0] + ONE_THIRD-1)
-                
-            #Width
-            
-            Pixellength = (multipliersX[multw][1] - multipliersX[multw][0])  
-            ONE_THIRD = int(Pixellength/3)
-            TWO_THIRDS = ONE_THIRD + ONE_THIRD
-            
-            if w < 127:
-                sprite_to_export[2] = (int(((w) * ONE_THIRD - 1)/127) + multipliersX[multw][0]) - sprite_to_export[0]
-            else:
-                sprite_to_export[2] = (int(((w - 127)*TWO_THIRDS - 1)/127) + multipliersX[multw][0] + ONE_THIRD-1) - sprite_to_export[0]
-            
-            
-            
-            #Height
-            Pixellength = (multipliersY[multh][1] - multipliersY[multh][0])  
-            ONE_THIRD = int(Pixellength/3)
-            TWO_THIRDS = ONE_THIRD + ONE_THIRD
-            if h < 127:
-                sprite_to_export[3] = (int(((h) * ONE_THIRD - 1)/127)) + multipliersY[multh][0] - sprite_to_export[1]
-            else:
-                sprite_to_export[3] = ((int(((h - 127)*TWO_THIRDS - 1)/127) ) + multipliersY[multh][0] + ONE_THIRD-1 - sprite_to_export[1])
-                
-            draw.rectangle([sprite_to_export[0],sprite_to_export[1],sprite_to_export[2] + sprite_to_export[0],sprite_to_export[3] + sprite_to_export[1]], fill=(0,0,255,128))
-            draw.rectangle([sprite_to_export[0]+1,sprite_to_export[1]+1,sprite_to_export[2] + sprite_to_export[0]-1,sprite_to_export[3]-1 + sprite_to_export[1]], fill=(255,0,0,128))
+            draw.rectangle([sprite_to_export[0],sprite_to_export[1],sprite_to_export[2]-1,sprite_to_export[3]-1], fill=(50,0,0,255))
+            draw.rectangle([sprite_to_export[0]+1,sprite_to_export[1]+1,sprite_to_export[2]-2,sprite_to_export[3]-2], fill=(250,50,50,128))
         output = BytesIO()
         image.convert("RGBA").save(output, "BMP")
         data = output.getvalue()[14:]
@@ -207,7 +178,7 @@ class InputBox:
                     current_selected = self.index
                     own_square_flag = False
                     if self.active == 1:
-                        SetTexture(sprite_list[self.index][0], 0, 0, 0, 0, 0, 0, 0, 0,)
+                        SetTexture(sprite_list[self.index][0], (0,0,0,0), (0,0,0,0), (0,0,0,0), (0,0,0,0))
                         self.active = 0
                         self.thickness = 1
                         self.color = self.default_color
@@ -220,7 +191,7 @@ class InputBox:
                         self.active = 1
                         self.thickness = 2 if self.active else 1
                         self.color = pygame.Color("yellow")
-                        SetTexture(sprite_list[self.index][0], sprite_list[self.index][1], sprite_list[self.index][2], sprite_list[self.index][3], sprite_list[self.index][4], sprite_list[self.index][5], sprite_list[self.index][6], sprite_list[self.index][7], sprite_list[self.index][8])
+                        SetTexture(sprite_list[self.index][0], sprite_list[self.index][1], sprite_list[self.index][2], sprite_list[self.index][3], sprite_list[self.index][4])
     
     def activate_anyway(self):
         global own_square_flag
@@ -235,8 +206,7 @@ class InputBox:
         self.active = 1
         self.thickness = 2 if self.active else 1
         self.color = pygame.Color("yellow")
-        SetTexture(sprite_list[self.index][0], sprite_list[self.index][1], sprite_list[self.index][2], sprite_list[self.index][3], sprite_list[self.index][4], sprite_list[self.index][5], sprite_list[self.index][6], sprite_list[self.index][7], sprite_list[self.index][8])
-
+        SetTexture(sprite_list[self.index][0], sprite_list[self.index][1], sprite_list[self.index][2], sprite_list[self.index][3], sprite_list[self.index][4])
 
     def draw(self, surface, x_pos):
         # Blit the text.
@@ -246,8 +216,7 @@ class InputBox:
         pygame.draw.rect(surface, self.color, self.rect, self.thickness)
 
 
-def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
-    global current 
+def SetTexture(texture, x, y, w, h):
     global texture_pos
     global texture_change_flag
     global img
@@ -258,109 +227,25 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
     #set image
     img = pygame.image.load(directory[0] + "\\" + texture_list[texture])
     #calculate the coordinates given the values
-    Img_size = img.get_rect()[2],img.get_rect()[3]
-    multipliersX = { 0 : [0,0],
-                185 : [-int(Img_size[0] / 512) ,-int(Img_size[0] / 128)],
-                186 : [-int(Img_size[0] / 128) ,-int(Img_size[0] / 32)],
-                187 : [-int(Img_size[0] / 32)  ,-int(Img_size[0] / 8)],
-                188 : [-int(Img_size[0] / 8)   ,-int(Img_size[0] / 2)],
-                189 : [-int(Img_size[0] / 2)   ,-int(Img_size[0] * 2)],
-                190 : [-int(Img_size[0] * 2)   ,-int(Img_size[0] * 8)],
-                191 : [-int(Img_size[0] * 8)   ,-int(Img_size[0] * 32)],
-                192 : [-int(Img_size[0] * 32)  ,-int(Img_size[0] * 128)],
-                
-                59 : [int(Img_size[0] / 512) ,int(Img_size[0] / 128 )],
-                60 : [int(Img_size[0] / 128) ,int(Img_size[0] / 32  )],
-                61 : [int(Img_size[0] / 32)  ,int(Img_size[0] / 8   )],
-                62 : [int(Img_size[0] / 8)  +1 ,int(Img_size[0] / 2   -1)],
-                63 : [int(Img_size[0] / 2)   ,int(Img_size[0] * 2   -1)],
-                64 : [int(Img_size[0] * 2)   ,int(Img_size[0] * 8   -1)],
-                65 : [int(Img_size[0] * 8)   ,int(Img_size[0] * 32  -1)],
-                66 : [int(Img_size[0] * 32)  ,int(Img_size[0] * 128 -1)]}
-                
-    multipliersY = { 0 : [0,0],
-                185 : [-int(Img_size[1] / 512) ,-int(Img_size[1] / 128)],
-                186 : [-int(Img_size[1] / 128) ,-int(Img_size[1] / 32)],
-                187 : [-int(Img_size[1] / 32)  ,-int(Img_size[1] / 8)],
-                188 : [-int(Img_size[1] / 8)   ,-int(Img_size[1] / 2)],
-                189 : [-int(Img_size[1] / 2)   ,-int(Img_size[1] * 2)],
-                190 : [-int(Img_size[1] * 2)   ,-int(Img_size[1] * 8)],
-                191 : [-int(Img_size[1] * 8)   ,-int(Img_size[1] * 32)],
-                192 : [-int(Img_size[1] * 32)  ,-int(Img_size[1] * 128)],
-                
-                59 : [int(Img_size[1] / 512)  ,int(Img_size[1] / 128)],
-                60 : [int(Img_size[1] / 128)  ,int(Img_size[1] / 32) ],
-                61 : [int(Img_size[1] / 32)   ,int(Img_size[1] / 8)  ],
-                62 : [int(Img_size[1] / 8)   +1 ,int(Img_size[1] / 2)  -1],
-                63 : [int(Img_size[1] / 2)    ,int(Img_size[1] * 2)  -1],
-                64 : [int(Img_size[1] * 2)    ,int(Img_size[1] * 8)  -1],
-                65 : [int(Img_size[1] * 8)    ,int(Img_size[1] * 32) -1],
-                66 : [int(Img_size[1] * 32)   ,int(Img_size[1] * 128)-1]}
-    # i'm so bad lol
-    txt_texture.text = str(texture)
-    if txt_texture.active:
-        txt_texture.active = False
-        txt_texture.update()
-        txt_texture.active = True
-    else:
-        txt_texture.update()
+    Img_size = img.get_size()
     
-    current = (x,multx,y,multy,w,multw,h,multh,texture)
-        
-    #TOPRIGHT X
-    
-    Pixellength = (multipliersX[multx][1] - multipliersX[multx][0])  
-    ONE_THIRD = int(Pixellength/3)
-    TWO_THIRDS = ONE_THIRD + ONE_THIRD
-    
-    if x <= 127:
-        rect_coords[0] = (int(((x) * ONE_THIRD - 1)/127)+ multipliersX[multx][0])
-    else:
-        rect_coords[0] = (int(((x - 127)*TWO_THIRDS - 1)/127) + multipliersX[multx][0] + ONE_THIRD)
-    
-    
-    
-    #TOPRIGHT Y
-    Pixellength = (multipliersY[multy][1] - multipliersY[multy][0])  
-    ONE_THIRD = int(Pixellength/3)
-    TWO_THIRDS = ONE_THIRD + ONE_THIRD
-    if y <= 127:
-    
-        rect_coords[1] = int(((y) * ONE_THIRD - 1)/127)+ multipliersY[multy][0]
-    else:
-        rect_coords[1] = (int(((y - 127)*TWO_THIRDS - 1)/127) + multipliersY[multy][0] + ONE_THIRD)
-        
-    #Width
-    
-    Pixellength = (multipliersX[multw][1] - multipliersX[multw][0])  
-    ONE_THIRD = int(Pixellength/3)
-    TWO_THIRDS = ONE_THIRD + ONE_THIRD
-    
-    if w <= 127:
-        rect_coords[2] = (int(((w) * ONE_THIRD - 1)/127) + multipliersX[multw][0]) - rect_coords[0]
-    else:
-        rect_coords[2] = (int(((w - 127)*TWO_THIRDS - 1)/127) + multipliersX[multw][0] + ONE_THIRD) - rect_coords[0]
-    
-    
-    
-    #Height
-    Pixellength = (multipliersY[multh][1] - multipliersY[multh][0])  
-    ONE_THIRD = int(Pixellength/3)
-    TWO_THIRDS = ONE_THIRD + ONE_THIRD
-    if h <= 127:
-        rect_coords[3] = (int(((h) * ONE_THIRD - 1)/127)) + multipliersY[multh][0] - rect_coords[1]
-    else:
-        rect_coords[3] = ((int(((h - 127)*TWO_THIRDS - 1)/127) ) + multipliersY[multh][0] + ONE_THIRD - rect_coords[1])
+    square_pos = calcu(x, y, w, h)
+
+    rect_coords[0] = (Img_size[0]) * square_pos[0]
+    rect_coords[1] = (Img_size[1]) * square_pos[1]
+    rect_coords[2] = (Img_size[0]) * square_pos[2] - rect_coords[0]
+    rect_coords[3] = (Img_size[1]) * square_pos[3] - rect_coords[1]
+     
     
     
     if texture != current_texture:
         texture_change_flag = True
     current_texture = texture
     
-    txt_Xpos.text = str(rect_coords[0])
-    txt_Ypos.text = str(rect_coords[1])
-    txt_Width.text = str(rect_coords[2])
-    txt_Height.text = str(rect_coords[3])
+    txt_Xpos.text = str(int(rect_coords[0]))
+    txt_Ypos.text = str(int(rect_coords[1]))
+    txt_Width.text = str(int(rect_coords[2]))
+    txt_Height.text = str(int(rect_coords[3]))
     txt_Xpos.maxm = Img_size[0]
     txt_Ypos.maxm = Img_size[1]
     txt_Width.maxm = Img_size[0]
@@ -371,7 +256,9 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
     txt_Ypos.maxm = Img_size[1]
     txt_Width.maxm = Img_size[0]
     txt_Height.maxm = Img_size[1]
+    txt_texture.text = str(texture)
     
+    txt_texture.update()
     txt_Xpos.update() 
     txt_Ypos.update() 
     txt_Width.update()
@@ -381,89 +268,70 @@ def SetTexture(texture, x, multx, y, multy, w, multw, h, multh):
 def reset_sprite():
     sprite_list[current_selected] = backup_sprite_list[current_selected]
     SetTexture(backup_sprite_list[current_selected][0], backup_sprite_list[current_selected][1], backup_sprite_list[current_selected][2], backup_sprite_list[current_selected][3], 
-                backup_sprite_list[current_selected][4], backup_sprite_list[current_selected][5], backup_sprite_list[current_selected][6], backup_sprite_list[current_selected][7], backup_sprite_list[current_selected][8])
+                backup_sprite_list[current_selected][4])
 
 
 def Save_Anim():
-    offset = (sprite_list[current_selected][9])
-    
-    
-    X1 = calcu(rect_coords[0], multipliersX)
-    
-    Y1 = calcu(rect_coords[1], multipliersY)
-    
-    X2 = calcu(rect_coords[2]+rect_coords[0], multipliersX)
-    
-    Y2 = calcu(rect_coords[3]+rect_coords[1], multipliersY)
+    offset = (sprite_list[current_selected][5])
+    Img_size = img.get_size()
     
     
     with open(anim_file, "r+b") as f:
         if big_endian_flag == "-be":
             
-            f.seek(offset + 3)
-            f.write(int(txt_texture.text).to_bytes(1, 'little'))
+            X1 = struct.pack(">f", rect_coords[0] / Img_size[0])
+            Y1 = struct.pack(">f", rect_coords[1] / Img_size[1])
+            X2 = struct.pack(">f", rect_coords[2] / Img_size[0] + rect_coords[0] / Img_size[0])
+            Y2 = struct.pack(">f", rect_coords[3] / Img_size[1] + rect_coords[1] / Img_size[1])
+
+            
+            f.seek(offset)
+            f.write(int(txt_texture.text).to_bytes(4, 'big'))
         
-            f.seek(offset + 5)
-            f.write(X1[0].to_bytes(1, 'little'))
-            
             f.seek(offset + 4)
-            f.write(X1[1].to_bytes(1, 'little'))
-            
-            f.seek(offset + 9)
-            f.write(Y1[0].to_bytes(1, 'little'))
+            f.write(X1)
             
             f.seek(offset + 8)
-            f.write(Y1[1].to_bytes(1, 'little'))
-            
-            
-            f.seek(offset + 13)
-            f.write(X2[0].to_bytes(1, 'little'))
+            f.write(Y1)
             
             f.seek(offset + 12)
-            f.write(X2[1].to_bytes(1, 'little'))
-            
-            f.seek(offset + 17)
-            f.write(Y2[0].to_bytes(1, 'little'))
+            f.write(X2)
             
             f.seek(offset + 16)
-            f.write(Y2[1].to_bytes(1, 'little'))
+            f.write(Y2)
             
-            sprite_list[current_selected] = (int(txt_texture.text),X1[0],X1[1],Y1[0],Y1[1],X2[0],X2[1],Y2[0],Y2[1], offset)
+                        
+            sprite_list[current_selected] = (int(txt_texture.text),X1,Y1,X2,Y2, offset)
             
             f.seek(0)
             data = f.read()
         
         
         else:
+            X1 = struct.pack("f", rect_coords[0] / Img_size[0])
+            Y1 = struct.pack("f", rect_coords[1] / Img_size[1])
+            X2 = struct.pack("f", rect_coords[2] / Img_size[0] + rect_coords[0] / Img_size[0])
+            Y2 = struct.pack("f", rect_coords[3] / Img_size[1] + rect_coords[1] / Img_size[1])
+            
+            print(X1, Y1)
+            
             f.seek(offset)
-            f.write(int(txt_texture.text).to_bytes(1, 'little'))
+            f.write(int(txt_texture.text).to_bytes(4, 'little'))
         
-            f.seek(offset + 6)
-            f.write(X1[0].to_bytes(1, 'little'))
+            f.seek(offset + 4)
+            f.write(X1)
             
-            f.seek(offset + 7)
-            f.write(X1[1].to_bytes(1, 'little'))
+            f.seek(offset + 8)
+            f.write(Y1)
             
-            f.seek(offset + 10)
-            f.write(Y1[0].to_bytes(1, 'little'))
+            f.seek(offset + 12)
+            f.write(X2)
             
-            f.seek(offset + 11)
-            f.write(Y1[1].to_bytes(1, 'little'))
+            f.seek(offset + 16)
+            f.write(Y2)
             
-            
-            f.seek(offset + 14)
-            f.write(X2[0].to_bytes(1, 'little'))
-            
-            f.seek(offset + 15)
-            f.write(X2[1].to_bytes(1, 'little'))
-            
-            f.seek(offset + 18)
-            f.write(Y2[0].to_bytes(1, 'little'))
-            
-            f.seek(offset + 19)
-            f.write(Y2[1].to_bytes(1, 'little'))
-            
-            sprite_list[current_selected] = (int(txt_texture.text),X1[0],X1[1],Y1[0],Y1[1],X2[0],X2[1],Y2[0],Y2[1], offset)
+                        
+            sprite_list[current_selected] = (int(txt_texture.text),X1,Y1,X2,Y2, offset)
             
             f.seek(0)
             data = f.read()
@@ -526,80 +394,22 @@ class TextBox:
                         self.text += event.unicode
                         if int(self.text) > self.maxm:
                             self.text = str(self.maxm)
+                if self == txt_texture:
+                    try:
+                        SetTexture(int(self.text), sprite_list[current_selected][1], sprite_list[current_selected][2], sprite_list[current_selected][3], sprite_list[current_selected][4])
+                    except ValueError:
+                        pass
                 self.update()            
             
 
     def update(self):
-        self.txt_surface = FONT.render(self.text, True, (255, 255, 255, 255))
-               
+        global rect_coords
+        self.txt_surface = FONT.render(self.text, True, (255, 255, 255, 255))      
         try:
-            rect_coords[0] = int(txt_Xpos.text)
-            rect_coords[1] = int(txt_Ypos.text)
-            rect_coords[2] = int(txt_Width.text)
-            rect_coords[3] = int(txt_Height.text)
-            rect_coords[3] = int(txt_Height.text)
-            if self.title == "Texture":
-                if self.active:
-                    global img 
-                    img = pygame.image.load(directory[0] + "\\" + texture_list[int(txt_texture.text)])
-                    global current_texture
-                    current_texture = int(txt_texture.text)
-                    Img_size = img.get_size()
-                    global multipliersX
-                    global multipliersY
-                    multipliersX = { 0 : [0,0],
-                                185 : [-int(Img_size[0] / 512) ,-int(Img_size[0] / 128)],
-                                186 : [-int(Img_size[0] / 128) ,-int(Img_size[0] / 32)],
-                                187 : [-int(Img_size[0] / 32)  ,-int(Img_size[0] / 8)],
-                                188 : [-int(Img_size[0] / 8)   ,-int(Img_size[0] / 2)],
-                                189 : [-int(Img_size[0] / 2)   ,-int(Img_size[0] * 2)],
-                                190 : [-int(Img_size[0] * 2)   ,-int(Img_size[0] * 8)],
-                                191 : [-int(Img_size[0] * 8)   ,-int(Img_size[0] * 32)],
-                                192 : [-int(Img_size[0] * 32)  ,-int(Img_size[0] * 128)],
-                                
-                                59 : [int(Img_size[0] / 512) ,int(Img_size[0] / 128 )],
-                                60 : [int(Img_size[0] / 128) ,int(Img_size[0] / 32  )],
-                                61 : [int(Img_size[0] / 32)  ,int(Img_size[0] / 8   )],
-                                62 : [int(Img_size[0] / 8)  +1 ,int(Img_size[0] / 2   -1)],
-                                63 : [int(Img_size[0] / 2)   ,int(Img_size[0] * 2   -1)],
-                                64 : [int(Img_size[0] * 2)   ,int(Img_size[0] * 8   -1)],
-                                65 : [int(Img_size[0] * 8)   ,int(Img_size[0] * 32  -1)],
-                                66 : [int(Img_size[0] * 32)  ,int(Img_size[0] * 128 -1)]}
-                                
-                    multipliersY = { 0 : [0,0],
-                                185 : [-int(Img_size[1] / 512) ,-int(Img_size[1] / 128)],
-                                186 : [-int(Img_size[1] / 128) ,-int(Img_size[1] / 32)],
-                                187 : [-int(Img_size[1] / 32)  ,-int(Img_size[1] / 8)],
-                                188 : [-int(Img_size[1] / 8)   ,-int(Img_size[1] / 2)],
-                                189 : [-int(Img_size[1] / 2)   ,-int(Img_size[1] * 2)],
-                                190 : [-int(Img_size[1] * 2)   ,-int(Img_size[1] * 8)],
-                                191 : [-int(Img_size[1] * 8)   ,-int(Img_size[1] * 32)],
-                                192 : [-int(Img_size[1] * 32)  ,-int(Img_size[1] * 128)],
-                                
-                                59 : [int(Img_size[1] / 512)  ,int(Img_size[1] / 128)],
-                                60 : [int(Img_size[1] / 128)  ,int(Img_size[1] / 32) ],
-                                61 : [int(Img_size[1] / 32)   ,int(Img_size[1] / 8)  ],
-                                62 : [int(Img_size[1] / 8)   +1 ,int(Img_size[1] / 2)  -1],
-                                63 : [int(Img_size[1] / 2)    ,int(Img_size[1] * 2)  -1],
-                                64 : [int(Img_size[1] * 2)    ,int(Img_size[1] * 8)  -1],
-                                65 : [int(Img_size[1] * 8)    ,int(Img_size[1] * 32) -1],
-                                66 : [int(Img_size[1] * 32)   ,int(Img_size[1] * 128)-1]}
-                    
-                    
-                rect_coords[0] = int(0)
-                rect_coords[1] = int(0)
-                
-                txt_Xpos.maxm =   img.get_size()[0]
-                txt_Ypos.maxm =   img.get_size()[1]
-                txt_Width.maxm =  img.get_size()[0]
-                txt_Height.maxm = img.get_size()[1]
-                
-                
-                
-                
-                
+            rect_coords = [float(txt_Xpos.text), float(txt_Ypos.text), float(txt_Width.text), float(txt_Height.text)]
         except:
             pass
+        
         
         
     def draw(self, screen):
@@ -622,43 +432,18 @@ def clipboard(clip_type, data):
     
 
 
-def calcu(value, dict):
-    value_list = []
-    mult = 0
-    for i in dict:
-        if value  in range(dict[i][0],dict[i][1]):
-            mult = i
-            
+def calcu(x, y, w, h):
+    X1_pos = (x[0]).to_bytes(1, "big") + (x[1]).to_bytes(1, "big") + (x[2]).to_bytes(1, "big") + (x[3]).to_bytes(1, "big")
+    Y1_pos = (y[0]).to_bytes(1, "big") + (y[1]).to_bytes(1, "big") + (y[2]).to_bytes(1, "big") + (y[3]).to_bytes(1, "big")
+    X2_pos = (w[0]).to_bytes(1, "big") + (w[1]).to_bytes(1, "big") + (w[2]).to_bytes(1, "big") + (w[3]).to_bytes(1, "big")
+    Y2_pos = (h[0]).to_bytes(1, "big") + (h[1]).to_bytes(1, "big") + (h[2]).to_bytes(1, "big") + (h[3]).to_bytes(1, "big")    
     
-        
-    value = (value - dict[mult][0])
+    X1_pos = (struct.unpack('f',X1_pos))
+    Y1_pos = (struct.unpack('f',Y1_pos))
+    X2_pos = (struct.unpack('f',X2_pos))
+    Y2_pos = (struct.unpack('f',Y2_pos))
     
-    length = (dict[mult][1]) - (dict[mult][0])
-    
-
-    lower_side = int(length / 3)
-    higher_side = length - int(length / 3)
-    
-    if value == 0:
-        return(0, 0)
-    else:
-        if value <= lower_side:
-            
-            try:
-                a = (value*128)/lower_side
-            
-            except ZeroDivisionError: 
-                a = 0
-            
-            return(int(a), mult)
-            
-        else:
-            try:
-                a = (int(value - lower_side)*128)/higher_side
-            
-            except ZeroDivisionError: 
-                a = 0
-            return(int(a) + 128, mult) 
+    return(X1_pos[0], Y1_pos[0], X2_pos[0], Y2_pos[0])
 
 
 
@@ -667,9 +452,9 @@ scale = 1
 counter = 0
 for sprite in sprite_list:
     color = "white"
-    if sprite[1] == 0 and sprite[2] == 0 and sprite[3] == 0 and sprite[4] == 0 and sprite[5] == 0 and sprite[6] == 0 and sprite[7] == 0 and sprite[8] == 0:
+    if sprite[1] == (0,0,0,0) and sprite[2] == (0,0,0,0) and sprite[3] == (0,0,0,0) and sprite[4] == (0,0,0,0):
         color = "red"
-    button_list.append(InputBox(0, counter * 20, 200, 20, "Sprite " + str(counter) + ", Texture " + str(sprite[0]) + ", Offset: " + str(sprite[9]), counter, color))
+    button_list.append(InputBox(0, counter * 20, 200, 20, "Sprite " + str(counter) + ", Texture " + str(sprite[0]) + ", Offset: " + str(sprite[5]), counter, color))
     counter += 1
 
 
@@ -698,10 +483,11 @@ running = True
 ypos_counter = 0
 
 current_texture = 0
+holding_left_click = False
 holding_middle_click = False
 holding_right_click = False
+holding_shift = False
 stop_flag = False
-
 button_list[0].activate_anyway()
 
 while running:
@@ -717,7 +503,11 @@ while running:
             box.handle_event(event)
             
         if event.type == pygame.MOUSEBUTTONDOWN:
+            
+
             if event.button == 1:
+                starting_mouse_pos = event.pos
+                holding_left_click = True
                 if event.pos[0] in range(0, 40) and event.pos[1] in range(0, 15):
                     scale = 1
             
@@ -759,10 +549,24 @@ while running:
             
             
         if event.type == pygame.MOUSEBUTTONUP:
+            holding_left_click = False
             holding_middle_click = False
             holding_right_click = False
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
             
+            txt_Width.text = str(int(rect_coords[2]))
+            txt_Height.text = str(int(rect_coords[3]))
+            txt_Width.update()
+            txt_Height.update()
+            txt_Xpos.text = str(int(rect_coords[0]))
+            txt_Ypos.text = str(int(rect_coords[1]))
+            txt_Xpos.update()
+            txt_Ypos.update()
+            
+        
+        if event.type == pygame.KEYUP:
+            holding_shift = False
+        
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 if keys[pygame.K_LCTRL]:
@@ -777,17 +581,16 @@ while running:
                             btn.activate_anyway()
                             ypos_counter = -current_selected * 20
                     
-                elif keys[pygame.K_LSHIFT]:
-                    texture_pos = ((texture_pos[0] + 20 , texture_pos[1]))
-                
-                
                 else:
                     rect_coords[0] -= 1
                     txt_Xpos.text = str(rect_coords[0])
                     txt_Xpos.update()
               
               
-              
+            if event.key == pygame.K_LSHIFT:
+                holding_shift = True
+
+                
             if event.key == pygame.K_RIGHT:
                 if keys[pygame.K_LCTRL]:
                     for txt in input_boxes:
@@ -820,9 +623,6 @@ while running:
                         if btn.index == current_selected:
                             btn.activate_anyway()
                             ypos_counter = -current_selected *20
-                            
-                elif keys[pygame.K_LSHIFT]:
-                    texture_pos = ((texture_pos[0] , texture_pos[1] + 20))
         
                 else:
                     rect_coords[1] -= 1
@@ -834,7 +634,7 @@ while running:
                 if keys[pygame.K_LCTRL]:
                     for txt in input_boxes:
                         txt.active = False
-                    if current_selected < len(sprite_list):
+                    if current_selected < len(sprite_list)-1:
                         current_selected += 1
                     for btn in button_list:
                         if btn.index == current_selected:
@@ -858,6 +658,8 @@ while running:
                 txt_Width.update()
                 txt_Height.text = "0"
                 txt_Height.update()
+                txt_texture.text = "0"
+                txt_texture.update()
             
             if event.key == pygame.K_e:
                 texture_pos = (screen.get_size()[0]/2 - 100,screen.get_size()[1]/2)
@@ -879,6 +681,20 @@ while running:
         stop_flag = False
     zoom_level = int(100 / scale)
     
+    mouse_pos = pygame.mouse.get_pos()
+    
+    print("holding", holding_left_click, holding_shift)
+    
+    if holding_left_click and holding_shift:
+        rect_coords[2] = (rect_coords[2] - (starting_mouse_pos[0] - mouse_pos[0])*scale)
+        rect_coords[3] = (rect_coords[3] - (starting_mouse_pos[1] - mouse_pos[1])*scale)
+        
+        txt_Width.text = str(rect_coords[2])
+        txt_Height.text = str(rect_coords[3])
+        txt_Width.update()
+        txt_Height.update()
+
+        starting_mouse_pos = mouse_pos
     
     clickable_buttons_idk[0].rect = pygame.Rect(screen.get_size()[0]-400,screen.get_size()[1]-30,80,22)
     clickable_buttons_idk[1].rect = pygame.Rect(screen.get_size()[0]-300,screen.get_size()[1]-30,80,22)
@@ -888,7 +704,6 @@ while running:
         zoom_level = 50
     elif zoom_level == 199:
         zoom_level = 200
-    mouse_pos = pygame.mouse.get_pos()
     
 
     if holding_middle_click:
@@ -896,8 +711,8 @@ while running:
         starting_mouse_pos = mouse_pos
     
     if holding_right_click:
-        rect_coords[0] = int(rect_coords[0] - (starting_mouse_pos[0] - mouse_pos[0])*scale)
-        rect_coords[1] = int(rect_coords[1] - (starting_mouse_pos[1] - mouse_pos[1])*scale)
+        rect_coords[0] = (rect_coords[0] - (starting_mouse_pos[0] - mouse_pos[0])*scale)
+        rect_coords[1] = (rect_coords[1] - (starting_mouse_pos[1] - mouse_pos[1])*scale)
         if rect_coords[0] < 0:
             rect_coords[0] = 0
         if rect_coords[1] < 0:
