@@ -683,8 +683,6 @@ while running:
     
     mouse_pos = pygame.mouse.get_pos()
     
-    print("holding", holding_left_click, holding_shift)
-    
     if holding_left_click and holding_shift:
         rect_coords[2] = (rect_coords[2] - (starting_mouse_pos[0] - mouse_pos[0])*scale)
         rect_coords[3] = (rect_coords[3] - (starting_mouse_pos[1] - mouse_pos[1])*scale)
